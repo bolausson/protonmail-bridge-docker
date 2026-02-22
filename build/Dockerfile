@@ -2,13 +2,20 @@
 FROM debian:sid-slim AS build
 
 ARG version
+ARG BRIDGE_REPO=https://github.com/bolausson/proton-bridge.git
+ARG BRIDGE_REF=master
+ARG GLUON_REPO=https://github.com/bolausson/gluon.git
+ARG GLUON_REF=dev
 
 # Install dependencies
-RUN apt-get update && apt-get install -y golang build-essential libsecret-1-dev libfido2-dev libcbor-dev
+RUN apt-get update && apt-get install -y golang build-essential libsecret-1-dev libfido2-dev libcbor-dev git
+
+# Clone both repositories as siblings so go.mod replace directive (../gluon) works
+RUN git clone --depth 1 --branch ${GLUON_REF} ${GLUON_REPO} /build/gluon
+RUN git clone --depth 1 --branch ${BRIDGE_REF} ${BRIDGE_REPO} /build/proton-bridge
 
 # Build
-ADD https://github.com/ProtonMail/proton-bridge.git#${version} /build/
-WORKDIR /build/
+WORKDIR /build/proton-bridge/
 RUN make build-nogui vault-editor
 
 FROM debian:sid-slim
@@ -26,8 +33,8 @@ RUN apt-get update \
 COPY gpgparams entrypoint.sh /protonmail/
 
 # Copy protonmail
-COPY --from=build /build/bridge /protonmail/
-COPY --from=build /build/proton-bridge /protonmail/
-COPY --from=build /build/vault-editor /protonmail/
+COPY --from=build /build/proton-bridge/bridge /protonmail/
+COPY --from=build /build/proton-bridge/proton-bridge /protonmail/
+COPY --from=build /build/proton-bridge/vault-editor /protonmail/
 
 ENTRYPOINT ["bash", "/protonmail/entrypoint.sh"]
