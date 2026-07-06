@@ -36,7 +36,7 @@ if [[ $1 == init ]]; then
     kill_bridge
 
     # Login
-    tmux new-session -d -s bridge-init "/protonmail/proton-bridge --cli $@"
+    tmux new-session -d -s bridge-init "/protonmail/proton-bridge --cli --enable-gmail-labels $@"
     echo "ProtonMail Bridge init running inside tmux session 'bridge-init'"
     echo "Attach with: docker exec -it <container> tmux attach -t bridge-init"
 
@@ -52,7 +52,7 @@ else
     socat TCP-LISTEN:25,fork TCP:127.0.0.1:1025 &
     socat TCP-LISTEN:143,fork TCP:127.0.0.1:1143 &
 
-    tmux new-session -d -s bridge "/protonmail/proton-bridge --cli $@"
+    tmux new-session -d -s bridge "/protonmail/proton-bridge --cli --enable-gmail-labels $@"
     echo "ProtonMail Bridge running inside tmux session 'bridge'"
     echo "Attach with: docker exec -it <container> tmux attach -t bridge"
 
